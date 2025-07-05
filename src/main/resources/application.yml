@@ -26,10 +26,10 @@ spring:
   profiles:
     active: prod
 
-razorpay:
-  key:
-    id: rzp_test_your_test_key_id
-    secret: your_test_secret_key
+stripe:
+  secret-key: sk_test_51XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXbUfH9dQXXj6LrnMkPqFzXP7g0
+  publishable-key: pk_test_51XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXbUfH9dQXXj6LrnMkPqFzXP7g0
+  webhook-secret: whsec_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # Test profile configuration
 ---

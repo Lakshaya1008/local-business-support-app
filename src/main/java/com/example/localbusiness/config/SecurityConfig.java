@@ -22,11 +22,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf().disable()
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/webhook/**")
+            )
             .authorizeHttpRequests()
                 .requestMatchers("/", "/health", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", 
                                "/swagger-resources/**", "/webjars/**", "/api/auth/**", "/static/**", 
                                "/register", "/login", "/dashboard", "/products", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/webhook/**").permitAll()
                 .requestMatchers("/api/products/**").permitAll()
                 .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                 .requestMatchers("/api/seller/**").hasAuthority("SELLER")

@@ -1,61 +1,37 @@
 package com.example.localbusiness.controller;
 
-import com.example.localbusiness.service.PaymentService;
+import com.example.localbusiness.dto.CreatePaymentRequest;
+import com.example.localbusiness.dto.CreatePaymentResponse;
+import com.example.localbusiness.service.StripeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 public class PaymentController {
-    private final PaymentService paymentService;
+    private final StripeService stripeService;
 
-    @PostMapping("/create-order")
-    public ResponseEntity<Map<String, Object>> createPaymentOrder(@RequestBody Map<String, Object> request) {
-        BigDecimal amount = new BigDecimal(request.get("amount").toString());
-        String currency = request.get("currency").toString();
-        String receipt = UUID.randomUUID().toString();
-
-        String orderId = paymentService.createPaymentOrder(amount, currency, receipt);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("orderId", orderId);
-        response.put("amount", amount);
-        response.put("currency", currency);
-        response.put("receipt", receipt);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/verify")
-    public ResponseEntity<Map<String, Object>> verifyPayment(@RequestBody Map<String, String> request) {
-        String paymentId = request.get("paymentId");
-        String orderId = request.get("orderId");
-        String signature = request.get("signature");
-
-        boolean isValid = paymentService.verifyPayment(paymentId, orderId, signature);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("valid", isValid);
-        response.put("paymentId", paymentId);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/webhook")
-    public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> webhookData) {
-        boolean processed = paymentService.processWebhook(webhookData);
-        
-        if (processed) {
-            return ResponseEntity.ok("Webhook processed successfully");
-        } else {
-            return ResponseEntity.badRequest().body("Webhook processing failed");
+    @PostMapping("/create-checkout-session")
+    public ResponseEntity<CreatePaymentResponse> createCheckoutSession(@RequestBody CreatePaymentRequest request,
+                                                                     Authentication authentication) {
+        try {
+            Long userId = Long.parseLong(authentication.getName());
+            
+            // Set default URLs if not provided
+            if (request.getSuccessUrl() == null) {
+                request.setSuccessUrl("http://localhost:8085/orders/success");
+            }
+            if (request.getCancelUrl() == null) {
+                request.setCancelUrl("http://localhost:8085/cart");
+            }
+            
+            CreatePaymentResponse response = stripeService.createPaymentSession(request, userId);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 } 

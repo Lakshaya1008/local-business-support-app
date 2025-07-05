@@ -97,6 +97,14 @@ public class OrderService {
         return mapToOrderResponse(orderRepository.save(order));
     }
 
+    @Transactional
+    public OrderResponse updatePaymentStatus(Long orderId, Order.PaymentStatus paymentStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.setPaymentStatusEnum(paymentStatus);
+        return mapToOrderResponse(orderRepository.save(order));
+    }
+
     private OrderResponse mapToOrderResponse(Order order) {
         OrderResponse response = new OrderResponse();
         response.setId(order.getId());
