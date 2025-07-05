@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Local Business Support</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1>Local Business Support</h1>
+            <div class="nav-links">
+                <span th:text="'Welcome, ' + ${userEmail}"></span>
+                <a th:href="@{/products}" class="nav-link">Products</a>
+                <a th:href="@{/logout}" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div th:if="${success}" class="alert success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert error" th:text="${error}"></div>
+        
+        <div class="dashboard">
+            <h2>Dashboard</h2>
+            <p>Welcome to your Local Business Support dashboard!</p>
+            
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>Products</h3>
+                    <p>Manage your business products</p>
+                    <a th:href="@{/products}" class="btn btn-primary">View Products</a>
+                </div>
+                
+                <div class="card">
+                    <h3>Profile</h3>
+                    <p>Manage your account settings</p>
+                    <button class="btn btn-secondary" disabled>Coming Soon</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Analytics</h3>
+                    <p>View business analytics</p>
+                    <button class="btn btn-secondary" disabled>Coming Soon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

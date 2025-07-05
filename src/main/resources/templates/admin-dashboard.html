@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Local Business Support</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .main-content {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            margin: 5px 0;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">Admin Panel</h4>
+                        <p class="text-white-50" th:text="${userEmail}">admin@local.com</p>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#dashboard" data-bs-toggle="tab">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#vendor-applications" data-bs-toggle="tab">
+                                <i class="fas fa-store me-2"></i>Vendor Applications
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#reviews" data-bs-toggle="tab">
+                                <i class="fas fa-star me-2"></i>Review Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#orders" data-bs-toggle="tab">
+                                <i class="fas fa-shopping-cart me-2"></i>Orders
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#products" data-bs-toggle="tab">
+                                <i class="fas fa-box me-2"></i>Products
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="tab-content">
+                    <!-- Dashboard Tab -->
+                    <div class="tab-pane fade show active" id="dashboard">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Admin Dashboard</h1>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card stat-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-store fa-2x mb-2"></i>
+                                        <h5>Pending Applications</h5>
+                                        <h3 id="pendingApplications">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card stat-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-star fa-2x mb-2"></i>
+                                        <h5>Pending Reviews</h5>
+                                        <h3 id="pendingReviews">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card stat-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                                        <h5>Total Orders</h5>
+                                        <h3 id="totalOrders">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card stat-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-users fa-2x mb-2"></i>
+                                        <h5>Active Vendors</h5>
+                                        <h3 id="activeVendors">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Recent Vendor Applications</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="recentApplications">
+                                            <p class="text-muted">Loading...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Recent Reviews</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="recentReviews">
+                                            <p class="text-muted">Loading...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vendor Applications Tab -->
+                    <div class="tab-pane fade" id="vendor-applications">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Vendor Applications</h1>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="vendorApplicationsList">
+                                    <p class="text-muted">Loading applications...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reviews Tab -->
+                    <div class="tab-pane fade" id="reviews">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Review Management</h1>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="reviewsList">
+                                    <p class="text-muted">Loading reviews...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Orders Tab -->
+                    <div class="tab-pane fade" id="orders">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Order Management</h1>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="ordersList">
+                                    <p class="text-muted">Loading orders...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Tab -->
+                    <div class="tab-pane fade" id="products">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Product Management</h1>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="productsList">
+                                    <p class="text-muted">Loading products...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load dashboard data
+        loadDashboardData();
+        
+        function loadDashboardData() {
+            // Load pending applications
+            fetch('/api/vendor-applications/pending')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('pendingApplications').textContent = data.length;
+                    displayRecentApplications(data);
+                });
+
+            // Load pending reviews
+            fetch('/api/reviews/pending')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('pendingReviews').textContent = data.length;
+                    displayRecentReviews(data);
+                });
+        }
+
+        function displayRecentApplications(applications) {
+            const container = document.getElementById('recentApplications');
+            if (applications.length === 0) {
+                container.innerHTML = '<p class="text-muted">No pending applications</p>';
+                return;
+            }
+
+            let html = '';
+            applications.slice(0, 5).forEach(app => {
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>${app.businessName}</strong><br>
+                            <small class="text-muted">${app.businessDescription}</small>
+                        </div>
+                        <span class="badge bg-warning">Pending</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function displayRecentReviews(reviews) {
+            const container = document.getElementById('recentReviews');
+            if (reviews.length === 0) {
+                container.innerHTML = '<p class="text-muted">No pending reviews</p>';
+                return;
+            }
+
+            let html = '';
+            reviews.slice(0, 5).forEach(review => {
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>${review.rating}★</strong><br>
+                            <small class="text-muted">${review.comment}</small>
+                        </div>
+                        <span class="badge bg-warning">Pending</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Tab navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html> 
