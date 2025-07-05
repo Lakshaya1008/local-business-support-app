@@ -29,8 +29,8 @@ public class AuthService {
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .roles(request.getRoles())
+                .password(request.getPassword())
+                .roles(Collections.singleton(request.getRole()))
                 .enabled(true)
                 .verificationToken(token)
                 .build();
@@ -40,7 +40,6 @@ public class AuthService {
             emailService.sendVerificationEmail(user.getEmail(), token);
         } catch (Exception e) {
             log.warn("Failed to send verification email, but user registration succeeded: {}", e.getMessage());
-            // In development/testing, we can continue even if email fails
         }
     }
 
@@ -51,7 +50,10 @@ public class AuthService {
         if (!user.isEnabled())
             throw new RuntimeException("Email not verified");
         
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
+        System.out.println("DB password: [" + user.getPassword() + "]");
+        System.out.println("Form password: [" + request.getPassword() + "]");
+        
+        if (!request.getPassword().equals(user.getPassword()))
             throw new RuntimeException("Invalid credentials");
         
         String token = jwtUtil.generateToken(user.getEmail(),

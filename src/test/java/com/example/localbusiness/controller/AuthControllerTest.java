@@ -31,9 +31,9 @@ public class AuthControllerTest {
         
         RegisterRequest register = new RegisterRequest();
         register.setEmail(uniqueEmail);
-        register.setPassword("password");
+        register.setPassword("Test@1234");
         register.setName("Test User");
-        register.setRoles(Set.of(Role.USER));
+        register.setRole(Role.USER);
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)

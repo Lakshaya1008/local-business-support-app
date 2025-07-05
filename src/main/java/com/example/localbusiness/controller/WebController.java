@@ -63,6 +63,7 @@ public class WebController {
             request.setPassword(password);
             AuthResponse response = authService.authenticate(request);
             session.setAttribute("token", response.getToken());
+            session.setAttribute("userEmail", email);
             return "redirect:/dashboard";
         } catch (RuntimeException e) {
             String msg = (e.getMessage() == null || e.getMessage().isEmpty()) ? "Invalid email or password." : e.getMessage();

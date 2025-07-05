@@ -75,6 +75,15 @@
                                     Delete
                                 </button>
                             </form>
+                            <form th:action="@{/cart/add}" method="post" style="display:inline; margin-left:5px;">
+                                <input type="hidden" name="productId" th:value="${product.id}"/>
+                                <input type="number" name="quantity" value="1" min="1" style="width:50px;"/>
+                                <button type="submit">Add to Cart</button>
+                            </form>
+                            <form th:action="@{/wishlist/add}" method="post" style="display:inline; margin-left:5px;">
+                                <input type="hidden" name="productId" th:value="${product.id}"/>
+                                <button type="submit">Add to Wishlist</button>
+                            </form>
                         </div>
                     </div>
                 </div>
