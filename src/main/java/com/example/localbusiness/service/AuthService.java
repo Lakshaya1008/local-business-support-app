@@ -58,7 +58,31 @@ public class AuthService {
         
         String token = jwtUtil.generateToken(user.getEmail(),
                 user.getRoles().stream().map(Enum::name).collect(java.util.stream.Collectors.toSet()));
-        return new AuthResponse(token, user.getRoles().iterator().next().name(), user.isEnabled());
+        
+        UserResponse userResponse = new UserResponse(
+            user.getId(),
+            user.getName(),
+            user.getEmail(),
+            null, // Phone field not available in User model
+            user.getRoles().iterator().next().name(),
+            user.isEnabled()
+        );
+        
+        return new AuthResponse(token, userResponse);
+    }
+
+    public UserResponse getCurrentUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        return new UserResponse(
+            user.getId(),
+            user.getName(),
+            user.getEmail(),
+            null, // Phone field not available in User model
+            user.getRoles().iterator().next().name(),
+            user.isEnabled()
+        );
     }
 
     public void verifyEmail(String token) {

@@ -1,6 +1,6 @@
 /**
- * Stripe Checkout Integration
- * Handles payment processing with Stripe
+ * Cashfree Checkout Integration
+ * Handles payment processing with Cashfree
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -8,12 +8,12 @@ document.addEventListener('DOMContentLoaded', function () {
     
     if (checkoutButton) {
         checkoutButton.addEventListener('click', function () {
-            initiateStripeCheckout();
+            initiateCashfreeCheckout();
         });
     }
 });
 
-function initiateStripeCheckout() {
+function initiateCashfreeCheckout() {
     // Get cart items and total
     const cartItems = getCartItems();
     const total = calculateTotal();
@@ -27,7 +27,7 @@ function initiateStripeCheckout() {
     
     const request = {
         amount: total,
-        currency: 'inr',
+        currency: 'INR',
         items: cartItems,
         deliveryAddress: deliveryAddress
     };
@@ -46,14 +46,28 @@ function initiateStripeCheckout() {
         return response.json();
     })
     .then(data => {
-        return Stripe(data.publishableKey).redirectToCheckout({
-            sessionId: data.sessionId
+        // Initialize Cashfree payment
+        const options = {
+            sessionId: data.sessionId,
+            returnUrl: "http://localhost:8085/orders/success?order_id=" + data.orderId,
+            onSuccess: function(data) {
+                console.log('Payment successful:', data);
+                handlePaymentSuccess(data);
+            },
+            onFailure: function(data) {
+                console.log('Payment failed:', data);
+                alert('Payment failed. Please try again.');
+            },
+            onClose: function() {
+                console.log('Payment window closed');
+            }
+        };
+        
+        // Load Cashfree SDK and initialize payment
+        loadCashfreeSDK().then(() => {
+            const cashfree = new Cashfree(options);
+            cashfree.initialisePayment();
         });
-    })
-    .then(result => {
-        if (result.error) {
-            alert('Payment error: ' + result.error.message);
-        }
     })
     .catch(error => {
         console.error('Error:', error);
@@ -61,10 +75,63 @@ function initiateStripeCheckout() {
     });
 }
 
+function loadCashfreeSDK() {
+    return new Promise((resolve, reject) => {
+        if (window.Cashfree) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+function handlePaymentSuccess(paymentData) {
+    // Verify payment with backend
+    fetch('/api/payments/verify', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            orderId: paymentData.orderId,
+            paymentId: paymentData.paymentId,
+            signature: paymentData.signature
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.verified) {
+            // Clear cart
+            clearCart();
+            
+            // Show success message
+            showSuccessMessage('Payment successful! Your order has been placed.');
+            
+            // Redirect to orders page after a delay
+            setTimeout(() => {
+                window.location.href = '/orders';
+            }, 3000);
+        } else {
+            alert('Payment verification failed. Please contact support.');
+        }
+    })
+    .catch(error => {
+        console.error('Payment verification error:', error);
+        alert('Payment verification failed. Please contact support.');
+    });
+}
+
 function getCartItems() {
-    // This should be implemented based on your cart structure
-    // For now, returning empty array - implement based on your cart
-    return [];
+    // This function should return cart items in the format expected by the backend
+    // Implementation depends on your cart structure
+    const cartItems = [];
+    // Add logic to get cart items from localStorage or DOM
+    return cartItems;
 }
 
 function calculateTotal() {
@@ -73,6 +140,23 @@ function calculateTotal() {
         return parseFloat(totalElement.textContent.replace('₹', '')) || 0;
     }
     return 0;
+}
+
+function clearCart() {
+    // Clear cart from localStorage
+    localStorage.removeItem('cart');
+    // Update cart display if needed
+    updateCartDisplay();
+}
+
+function updateCartDisplay() {
+    // Update cart display logic
+    // Implementation depends on your cart display structure
+}
+
+function showSuccessMessage(message) {
+    // Show success message to user
+    alert(message);
 }
 
 // Handle success page
@@ -92,30 +176,6 @@ function handlePaymentSuccess() {
             window.location.href = '/orders';
         }, 3000);
     }
-}
-
-function clearCart() {
-    // Implement cart clearing logic
-    localStorage.removeItem('cart');
-    updateCartDisplay();
-}
-
-function updateCartDisplay() {
-    // Implement cart display update logic
-    const cartCount = document.getElementById('cart-count');
-    if (cartCount) {
-        cartCount.textContent = '0';
-    }
-}
-
-function showSuccessMessage(message) {
-    // Create and show success message
-    const successDiv = document.createElement('div');
-    successDiv.className = 'alert alert-success';
-    successDiv.textContent = message;
-    
-    const container = document.querySelector('.container') || document.body;
-    container.insertBefore(successDiv, container.firstChild);
 }
 
 // Check if we're on success page

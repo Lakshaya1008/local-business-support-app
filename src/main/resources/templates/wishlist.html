@@ -2,34 +2,439 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Wishlist</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist - VyapariVerse</title>
     <link rel="stylesheet" th:href="@{/style.css}">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-<div class="container">
-    <h2>Your Wishlist</h2>
-    <table>
-        <thead>
-        <tr>
-            <th>Product</th>
-            <th>Price</th>
-            <th>Action</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="item : ${wishlistItems}">
-            <td th:text="${item.product.name}"></td>
-            <td th:text="${item.product.price}"></td>
-            <td>
-                <form th:action="@{/wishlist/remove}" method="post">
-                    <input type="hidden" name="productId" th:value="${item.product.id}"/>
-                    <button type="submit">Remove</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    <a th:href="@{/products}">Continue Shopping</a>
-</div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/images/VyapariVerse.png" alt="VyapariVerse Logo" style="max-height: 40px; margin-right: 10px;" class="d-none d-md-inline">
+                <span class="d-md-none"><i class="fas fa-store me-2"></i></span>
+                VyapariVerse
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a th:href="@{/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                <a th:href="@{/products}" class="nav-link"><i class="fas fa-shopping-bag me-1"></i>Products</a>
+                <a th:href="@{/orders}" class="nav-link"><i class="fas fa-shopping-cart me-1"></i>My Orders</a>
+                <a th:href="@{/wishlist}" class="nav-link active"><i class="fas fa-heart me-1"></i>Wishlist</a>
+                <a th:href="@{/cart}" class="nav-link"><i class="fas fa-shopping-cart me-1"></i>Cart</a>
+                <a th:href="@{/logout}" class="nav-link"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-heart me-2"></i>My Wishlist</h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary" onclick="refreshWishlist()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                        </button>
+                        <button class="btn btn-success" onclick="moveAllToCart()">
+                            <i class="fas fa-shopping-cart me-2"></i>Move All to Cart
+                        </button>
+                        <button class="btn btn-danger" onclick="clearWishlist()">
+                            <i class="fas fa-trash me-2"></i>Clear Wishlist
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Wishlist Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Total Items</h6>
+                                        <h3 id="totalItems">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-heart fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Available Items</h6>
+                                        <h3 id="availableItems">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-check-circle fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Out of Stock</h6>
+                                        <h3 id="outOfStockItems">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wishlist Items -->
+                <div id="wishlistContainer">
+                    <!-- Wishlist items will be loaded here -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Your wishlist is empty</h4>
+                    <p class="text-muted">Start adding products to your wishlist to save them for later.</p>
+                    <a th:href="@{/products}" class="btn btn-primary">
+                        <i class="fas fa-shopping-bag me-2"></i>Browse Products
+                    </a>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading your wishlist...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Details Modal -->
+    <div class="modal fade" id="productDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Product Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="productDetailsContent">
+                    <!-- Product details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" onclick="moveToCartFromModal()">
+                        <i class="fas fa-shopping-cart me-2"></i>Move to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-store me-2"></i>VyapariVerse</h5>
+                    <p class="mb-0">Empowering Local Businesses</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">&copy; 2024 VyapariVerse. All rights reserved.</p>
+                    <small>Built with Spring Boot, Thymeleaf, and Bootstrap</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <script>
+        let currentWishlist = [];
+        let currentProductId = null;
+
+        // Load wishlist on page load
+        $(document).ready(function() {
+            loadWishlist();
+        });
+
+        function loadWishlist() {
+            $('#loadingState').show();
+            $('#wishlistContainer').hide();
+            $('#emptyState').hide();
+
+            $.ajax({
+                url: '/api/wishlist',
+                method: 'GET',
+                success: function(wishlist) {
+                    currentWishlist = wishlist;
+                    updateStatistics(wishlist);
+                    displayWishlist(wishlist);
+                    $('#loadingState').hide();
+                },
+                error: function(xhr) {
+                    $('#loadingState').hide();
+                    showAlert('Error loading wishlist: ' + xhr.responseText, 'error');
+                }
+            });
+        }
+
+        function updateStatistics(wishlist) {
+            const totalItems = wishlist.length;
+            const availableItems = wishlist.filter(item => item.product.quantity > 0).length;
+            const outOfStockItems = totalItems - availableItems;
+
+            $('#totalItems').text(totalItems);
+            $('#availableItems').text(availableItems);
+            $('#outOfStockItems').text(outOfStockItems);
+        }
+
+        function displayWishlist(wishlist) {
+            const container = $('#wishlistContainer');
+            container.empty();
+
+            if (wishlist.length === 0) {
+                $('#emptyState').show();
+                container.hide();
+                return;
+            }
+
+            container.show();
+            $('#emptyState').hide();
+
+            const row = $('<div class="row"></div>');
+            
+            wishlist.forEach(item => {
+                const col = createWishlistItemCard(item);
+                row.append(col);
+            });
+
+            container.append(row);
+        }
+
+        function createWishlistItemCard(wishlistItem) {
+            const product = wishlistItem.product;
+            const isAvailable = product.quantity > 0;
+            const availabilityClass = isAvailable ? 'text-success' : 'text-danger';
+            const availabilityIcon = isAvailable ? 'fa-check-circle' : 'fa-times-circle';
+            const availabilityText = isAvailable ? 'In Stock' : 'Out of Stock';
+
+            return $(`
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 wishlist-card" data-product-id="${product.id}">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">${product.name}</h6>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeFromWishlist(${product.id})">
+                                <i class="fas fa-heart-broken"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <img src="${product.imageUrl || '/images/placeholder.jpg'}" 
+                                     alt="${product.name}" 
+                                     class="img-fluid" 
+                                     style="max-height: 200px; object-fit: cover;">
+                            </div>
+                            <p class="card-text">${product.description || 'No description available'}</p>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-primary">${product.category}</span>
+                                <span class="${availabilityClass}">
+                                    <i class="fas ${availabilityIcon} me-1"></i>${availabilityText}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="text-primary mb-0">₹${product.price}</h5>
+                                <small class="text-muted">Quantity: ${product.quantity}</small>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success" onclick="moveToCart(${product.id})" ${!isAvailable ? 'disabled' : ''}>
+                                    <i class="fas fa-shopping-cart me-2"></i>Move to Cart
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="viewProductDetails(${product.id})">
+                                    <i class="fas fa-eye me-2"></i>View Details
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted">
+                            <small>Added on ${formatDate(wishlistItem.createdAt)}</small>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        function removeFromWishlist(productId) {
+            if (confirm('Remove this item from your wishlist?')) {
+                $.ajax({
+                    url: `/api/wishlist/remove/${productId}`,
+                    method: 'DELETE',
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert('Item removed from wishlist!', 'success');
+                            loadWishlist();
+                        } else {
+                            showAlert('Failed to remove item: ' + response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        showAlert('Error removing item from wishlist: ' + xhr.responseText, 'error');
+                    }
+                });
+            }
+        }
+
+        function moveToCart(productId) {
+            $.ajax({
+                url: `/api/wishlist/move-to-cart/${productId}`,
+                method: 'POST',
+                data: { quantity: 1 },
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('Item moved to cart successfully!', 'success');
+                        loadWishlist();
+                    } else {
+                        showAlert('Failed to move item to cart: ' + response.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    showAlert('Error moving item to cart: ' + xhr.responseText, 'error');
+                }
+            });
+        }
+
+        function moveAllToCart() {
+            if (confirm('Move all items from wishlist to cart?')) {
+                $.ajax({
+                    url: '/api/wishlist/move-all-to-cart',
+                    method: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert('All items moved to cart successfully!', 'success');
+                            loadWishlist();
+                        } else {
+                            showAlert('Failed to move all items: ' + response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        showAlert('Error moving items to cart: ' + xhr.responseText, 'error');
+                    }
+                });
+            }
+        }
+
+        function clearWishlist() {
+            if (confirm('Are you sure you want to clear your entire wishlist? This action cannot be undone.')) {
+                $.ajax({
+                    url: '/api/wishlist/clear',
+                    method: 'DELETE',
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert('Wishlist cleared successfully!', 'success');
+                            loadWishlist();
+                        } else {
+                            showAlert('Failed to clear wishlist: ' + response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        showAlert('Error clearing wishlist: ' + xhr.responseText, 'error');
+                    }
+                });
+            }
+        }
+
+        function viewProductDetails(productId) {
+            currentProductId = productId;
+            const wishlistItem = currentWishlist.find(item => item.product.id === productId);
+            
+            if (wishlistItem) {
+                const product = wishlistItem.product;
+                const content = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <img src="${product.imageUrl || '/images/placeholder.jpg'}" 
+                                 alt="${product.name}" 
+                                 class="img-fluid rounded">
+                        </div>
+                        <div class="col-md-6">
+                            <h4>${product.name}</h4>
+                            <p class="text-muted">${product.description || 'No description available'}</p>
+                            <div class="mb-3">
+                                <span class="badge bg-primary me-2">${product.category}</span>
+                                <span class="badge bg-${product.quantity > 0 ? 'success' : 'danger'}">
+                                    ${product.quantity > 0 ? 'In Stock' : 'Out of Stock'}
+                                </span>
+                            </div>
+                            <h5 class="text-primary">₹${product.price}</h5>
+                            <p><strong>Available Quantity:</strong> ${product.quantity}</p>
+                            <p><strong>Seller:</strong> ${product.seller?.name || 'Unknown'}</p>
+                            <p><strong>Added to Wishlist:</strong> ${formatDate(wishlistItem.createdAt)}</p>
+                        </div>
+                    </div>
+                `;
+                $('#productDetailsContent').html(content);
+                $('#productDetailsModal').modal('show');
+            }
+        }
+
+        function moveToCartFromModal() {
+            if (currentProductId) {
+                moveToCart(currentProductId);
+                $('#productDetailsModal').modal('hide');
+            }
+        }
+
+        function refreshWishlist() {
+            loadWishlist();
+            showAlert('Wishlist refreshed!', 'info');
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showAlert(message, type) {
+            const alertClass = type === 'error' ? 'danger' : type;
+            const alertHtml = `
+                <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Remove existing alerts
+            $('.alert').remove();
+            
+            // Add new alert at the top
+            $('.container').prepend(alertHtml);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+    </script>
 </body>
 </html> 

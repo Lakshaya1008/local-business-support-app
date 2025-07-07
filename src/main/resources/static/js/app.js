@@ -1,24 +1,24 @@
 /**
- * Local Business Support - Main JavaScript File
- * Interview Note: Modular JavaScript with Razorpay integration and cart management
+ * VyapariVerse - Main JavaScript File
+ * Handles common functionality across the application
  */
 
 // Global variables
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let currentUser = null;
+let cartItems = [];
+let wishlistItems = [];
 
-// Initialize application
-$(document).ready(function() {
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('VyapariVerse App initialized');
     initializeApp();
-    setupEventListeners();
-    updateCartDisplay();
 });
 
 /**
- * Initialize the application
+ * Initialize Application
  */
 function initializeApp() {
-    console.log('Local Business Support App initialized');
+    console.log('VyapariVerse App initialized');
     
     // Load user data from session
     loadUserData();
@@ -28,6 +28,8 @@ function initializeApp() {
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+    
+    setupCart();
 }
 
 /**
@@ -53,7 +55,7 @@ function setupEventListeners() {
     // Checkout functionality
     $(document).on('click', '#checkout-btn', function(e) {
         e.preventDefault();
-        if (cart.length === 0) {
+        if (cartItems.length === 0) {
             showAlert('Your cart is empty!', 'warning');
             return;
         }
@@ -72,12 +74,12 @@ function setupEventListeners() {
  * Cart Management Functions
  */
 function addToCart(productId, productName, productPrice) {
-    const existingItem = cart.find(item => item.id === productId);
+    const existingItem = cartItems.find(item => item.id === productId);
     
     if (existingItem) {
         existingItem.quantity += 1;
     } else {
-        cart.push({
+        cartItems.push({
             id: productId,
             name: productName,
             price: productPrice,
@@ -91,14 +93,14 @@ function addToCart(productId, productName, productPrice) {
 }
 
 function removeFromCart(productId) {
-    cart = cart.filter(item => item.id !== productId);
+    cartItems = cartItems.filter(item => item.id !== productId);
     saveCart();
     updateCartDisplay();
     showAlert('Item removed from cart!', 'info');
 }
 
 function updateCartQuantity(productId, quantity) {
-    const item = cart.find(item => item.id === productId);
+    const item = cartItems.find(item => item.id === productId);
     if (item) {
         if (quantity <= 0) {
             removeFromCart(productId);
@@ -111,15 +113,15 @@ function updateCartQuantity(productId, quantity) {
 }
 
 function saveCart() {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('cart', JSON.stringify(cartItems));
 }
 
 function getCartTotal() {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 }
 
 function updateCartDisplay() {
-    const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+    const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
     const cartTotal = getCartTotal();
     
     // Update cart badge
@@ -135,12 +137,12 @@ function updateCartModal() {
     const cartContainer = $('#cartItems');
     cartContainer.empty();
     
-    if (cart.length === 0) {
+    if (cartItems.length === 0) {
         cartContainer.html('<p class="text-muted">Your cart is empty</p>');
         return;
     }
     
-    cart.forEach(item => {
+    cartItems.forEach(item => {
         const itemHtml = `
             <div class="cart-item d-flex justify-content-between align-items-center mb-2">
                 <div>
@@ -174,7 +176,7 @@ function initiateCheckout() {
     }
     
     const orderData = {
-        items: cart,
+        items: cartItems,
         total: getCartTotal(),
         userId: currentUser.id
     };
@@ -186,7 +188,7 @@ function initiateCheckout() {
         contentType: 'application/json',
         data: JSON.stringify(orderData),
         success: function(response) {
-            initiateRazorpayPayment(response.orderId, response.total);
+            initiateCashfreePayment(response.orderId, response.total);
         },
         error: function(xhr) {
             showAlert('Failed to create order. Please try again.', 'error');
@@ -194,29 +196,44 @@ function initiateCheckout() {
     });
 }
 
-function initiateRazorpayPayment(orderId, amount) {
+function initiateCashfreePayment(orderId, amount) {
+    // Initialize Cashfree payment
     const options = {
-        key: 'rzp_test_your_test_key_id', // Replace with actual key
-        amount: amount * 100, // Razorpay expects amount in paise
-        currency: 'INR',
-        name: 'Local Business Support',
-        description: 'Order Payment',
-        order_id: orderId,
-        handler: function(response) {
-            // Handle successful payment
-            handlePaymentSuccess(response, orderId);
+        sessionId: orderId,
+        returnUrl: "http://localhost:8085/orders/success?order_id=" + orderId,
+        onSuccess: function(data) {
+            console.log('Payment successful:', data);
+            handlePaymentSuccess(data, orderId);
         },
-        prefill: {
-            name: currentUser.name,
-            email: currentUser.email
+        onFailure: function(data) {
+            console.log('Payment failed:', data);
+            showAlert('Payment failed. Please try again.', 'error');
         },
-        theme: {
-            color: '#007bff'
+        onClose: function() {
+            console.log('Payment window closed');
         }
     };
     
-    const rzp = new Razorpay(options);
-    rzp.open();
+    // Load Cashfree SDK and initialize payment
+    loadCashfreeSDK().then(() => {
+        const cashfree = new Cashfree(options);
+        cashfree.initialisePayment();
+    });
+}
+
+function loadCashfreeSDK() {
+    return new Promise((resolve, reject) => {
+        if (window.Cashfree) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
 }
 
 function handlePaymentSuccess(response, orderId) {
@@ -227,13 +244,13 @@ function handlePaymentSuccess(response, orderId) {
         contentType: 'application/json',
         data: JSON.stringify({
             orderId: orderId,
-            paymentId: response.razorpay_payment_id,
-            signature: response.razorpay_signature
+            paymentId: response.paymentId,
+            signature: response.signature
         }),
         success: function(result) {
             if (result.verified) {
                 // Clear cart
-                cart = [];
+                cartItems = [];
                 saveCart();
                 updateCartDisplay();
                 
@@ -302,5 +319,5 @@ function apiCall(url, method = 'GET', data = null) {
 }
 
 // Interview Note: This JavaScript file provides modular functionality for cart management,
-// Razorpay integration, and AJAX utilities. The code is organized for maintainability
+// Cashfree integration, and AJAX utilities. The code is organized for maintainability
 // and follows best practices for e-commerce applications. 

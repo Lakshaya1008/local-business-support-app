@@ -3,6 +3,7 @@ package com.example.localbusiness.service;
 import com.example.localbusiness.dto.AuthRequest;
 import com.example.localbusiness.dto.AuthResponse;
 import com.example.localbusiness.dto.RegisterRequest;
+import com.example.localbusiness.dto.UserResponse;
 import com.example.localbusiness.model.Role;
 import com.example.localbusiness.model.User;
 import com.example.localbusiness.repository.UserRepository;
@@ -111,8 +112,9 @@ class AuthServiceTest {
         // Then
         assertNotNull(response);
         assertEquals("jwtToken", response.getToken());
-        assertEquals("USER", response.getRole());
-        assertTrue(response.isEnabled());
+        assertNotNull(response.getUser());
+        assertEquals("USER", response.getUser().getRole());
+        assertTrue(response.getUser().isEnabled());
         
         verify(userRepository).findByEmail("test@example.com");
         verify(passwordEncoder).matches("password123", "encodedPassword");

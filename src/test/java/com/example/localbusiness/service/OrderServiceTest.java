@@ -52,7 +52,7 @@ class OrderServiceTest {
         orderRequest = new OrderRequest();
         orderRequest.setItems(List.of(orderItemRequest));
         orderRequest.setDeliveryAddress("123 Main St");
-        orderRequest.setPaymentMethod("RAZORPAY");
+        orderRequest.setPaymentMethod("CASHFREE");
         order = Order.builder()
                 .id(100L)
                 .customer(customer)
@@ -62,7 +62,7 @@ class OrderServiceTest {
                 .status(Order.OrderStatus.PENDING)
                 .orderDate(LocalDateTime.now())
                 .deliveryAddress("123 Main St")
-                .paymentMethod("RAZORPAY")
+                .paymentMethod("CASHFREE")
                 .paymentStatusEnum(Order.PaymentStatus.PENDING)
                 .build();
     }

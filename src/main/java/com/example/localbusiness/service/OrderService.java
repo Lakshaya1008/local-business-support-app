@@ -105,6 +105,12 @@ public class OrderService {
         return mapToOrderResponse(orderRepository.save(order));
     }
 
+    public OrderResponse getOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        return mapToOrderResponse(order);
+    }
+
     private OrderResponse mapToOrderResponse(Order order) {
         OrderResponse response = new OrderResponse();
         response.setId(order.getId());

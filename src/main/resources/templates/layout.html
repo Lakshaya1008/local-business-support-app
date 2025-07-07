@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title} ? ${title} + ' - Local Business Support' : 'Local Business Support'">Local Business Support</title>
+    <title th:text="${title} ? ${title} + ' - VyapariVerse' : 'VyapariVerse'">VyapariVerse</title>
+    <link rel="icon" type="image/png" href="/images/VyapariVerse.png">
     
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -18,9 +21,10 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-store me-2"></i>
-                Local Business Support
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/images/VyapariVerse.png" alt="VyapariVerse Logo" style="max-height: 40px; margin-right: 10px;" class="d-none d-md-inline">
+                <span class="d-md-none"><i class="fas fa-store me-2"></i></span>
+                VyapariVerse
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -94,11 +98,11 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5><i class="fas fa-store me-2"></i>Local Business Support</h5>
-                    <p class="mb-0">Empowering local businesses with digital commerce solutions.</p>
+                    <h5><i class="fas fa-store me-2"></i>VyapariVerse</h5>
+                    <p class="mb-0">Empowering Local Businesses</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-0">&copy; 2024 Local Business Support. All rights reserved.</p>
+                    <p class="mb-0">&copy; 2024 VyapariVerse. All rights reserved.</p>
                     <small>Built with Spring Boot, Thymeleaf, and Bootstrap</small>
                 </div>
             </div>
@@ -109,8 +113,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery for AJAX calls -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- Stripe SDK -->
-    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Cashfree SDK -->
+    <script src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js"></script>
     
     <!-- Custom JavaScript -->
     <script th:src="@{/js/app.js}"></script>

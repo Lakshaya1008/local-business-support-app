@@ -141,4 +141,81 @@ public class WebController {
         }
         return "redirect:/products";
     }
+
+    // Order Routes
+    @GetMapping("/orders")
+    public String userOrders(Model model, HttpSession session) {
+        String token = (String) session.getAttribute("token");
+        if (token == null) {
+            return "redirect:/login";
+        }
+        
+        String userEmail = (String) session.getAttribute("userEmail");
+        model.addAttribute("userEmail", userEmail);
+        return "user-orders";
+    }
+
+    @GetMapping("/admin/orders")
+    public String adminOrders(Model model, HttpSession session) {
+        String token = (String) session.getAttribute("token");
+        if (token == null) {
+            return "redirect:/login";
+        }
+        
+        String userEmail = (String) session.getAttribute("userEmail");
+        model.addAttribute("userEmail", userEmail);
+        return "admin-orders";
+    }
+
+    @GetMapping("/admin/dashboard")
+    public String adminDashboard(Model model, HttpSession session) {
+        String token = (String) session.getAttribute("token");
+        if (token == null) {
+            return "redirect:/login";
+        }
+        
+        String userEmail = (String) session.getAttribute("userEmail");
+        model.addAttribute("userEmail", userEmail);
+        return "admin-dashboard";
+    }
+
+    @GetMapping("/admin/products")
+    public String adminProducts(Model model, HttpSession session) {
+        String token = (String) session.getAttribute("token");
+        if (token == null) {
+            return "redirect:/login";
+        }
+        
+        try {
+            model.addAttribute("products", productService.getAllProducts());
+            model.addAttribute("userEmail", session.getAttribute("userEmail"));
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to load products: " + e.getMessage());
+        }
+        return "admin-products";
+    }
+
+    @GetMapping("/admin/users")
+    public String adminUsers(Model model, HttpSession session) {
+        String token = (String) session.getAttribute("token");
+        if (token == null) {
+            return "redirect:/login";
+        }
+        
+        String userEmail = (String) session.getAttribute("userEmail");
+        model.addAttribute("userEmail", userEmail);
+        return "admin-users";
+    }
+
+    @GetMapping("/wishlist")
+    public String wishlist(Model model, HttpSession session) {
+        String token = (String) session.getAttribute("token");
+        if (token == null) {
+            return "redirect:/login";
+        }
+        
+        String userEmail = (String) session.getAttribute("userEmail");
+        model.addAttribute("userEmail", userEmail);
+        return "wishlist";
+    }
 } 

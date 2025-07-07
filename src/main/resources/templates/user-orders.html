@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - VyapariVerse</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/images/VyapariVerse.png" alt="VyapariVerse Logo" style="max-height: 40px; margin-right: 10px;" class="d-none d-md-inline">
+                <span class="d-md-none"><i class="fas fa-store me-2"></i></span>
+                VyapariVerse
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a th:href="@{/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                <a th:href="@{/products}" class="nav-link"><i class="fas fa-shopping-bag me-1"></i>Products</a>
+                <a th:href="@{/orders}" class="nav-link active"><i class="fas fa-shopping-cart me-1"></i>My Orders</a>
+                <a th:href="@{/cart}" class="nav-link"><i class="fas fa-shopping-cart me-1"></i>Cart</a>
+                <a th:href="@{/logout}" class="nav-link"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-shopping-cart me-2"></i>My Orders</h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary" onclick="refreshOrders()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                        </button>
+                        <a th:href="@{/products}" class="btn btn-primary">
+                            <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Order Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Total Orders</h6>
+                                        <h3 id="totalOrders">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-shopping-cart fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Active Orders</h6>
+                                        <h3 id="activeOrders">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-clock fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Delivered</h6>
+                                        <h3 id="deliveredOrders">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-check-circle fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Total Spent</h6>
+                                        <h3 id="totalSpent">₹0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-rupee-sign fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="statusFilter" class="form-label">Order Status</label>
+                                <select class="form-select" id="statusFilter" onchange="filterOrders()">
+                                    <option value="">All Orders</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="CONFIRMED">Confirmed</option>
+                                    <option value="SHIPPED">Shipped</option>
+                                    <option value="DELIVERED">Delivered</option>
+                                    <option value="CANCELLED">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="dateFilter" class="form-label">Date Range</label>
+                                <select class="form-select" id="dateFilter" onchange="filterOrders()">
+                                    <option value="">All Time</option>
+                                    <option value="month">This Month</option>
+                                    <option value="quarter">Last 3 Months</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="searchFilter" class="form-label">Search Orders</label>
+                                <input type="text" class="form-control" id="searchFilter" placeholder="Order ID, Product name..." onkeyup="filterOrders()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders List -->
+                <div id="ordersContainer">
+                    <!-- Orders will be loaded here -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No orders found</h4>
+                    <p class="text-muted">You haven't placed any orders yet.</p>
+                    <a th:href="@{/products}" class="btn btn-primary">
+                        <i class="fas fa-shopping-bag me-2"></i>Start Shopping
+                    </a>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading your orders...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Order Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="orderDetailsContent">
+                    <!-- Order details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="printOrder()">
+                        <i class="fas fa-print me-2"></i>Print Receipt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-store me-2"></i>VyapariVerse</h5>
+                    <p class="mb-0">Empowering Local Businesses</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">&copy; 2024 VyapariVerse. All rights reserved.</p>
+                    <small>Built with Spring Boot, Thymeleaf, and Bootstrap</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <script>
+        let currentOrders = [];
+
+        // Load orders on page load
+        $(document).ready(function() {
+            loadOrders();
+        });
+
+        function loadOrders() {
+            $('#loadingState').show();
+            $('#ordersContainer').hide();
+            $('#emptyState').hide();
+
+            $.ajax({
+                url: '/api/orders/customer',
+                method: 'GET',
+                success: function(orders) {
+                    currentOrders = orders;
+                    updateStatistics(orders);
+                    displayOrders(orders);
+                    $('#loadingState').hide();
+                },
+                error: function(xhr) {
+                    $('#loadingState').hide();
+                    showAlert('Error loading orders: ' + xhr.responseText, 'error');
+                }
+            });
+        }
+
+        function updateStatistics(orders) {
+            const totalOrders = orders.length;
+            const activeOrders = orders.filter(o => ['PENDING', 'CONFIRMED', 'SHIPPED'].includes(o.status)).length;
+            const deliveredOrders = orders.filter(o => o.status === 'DELIVERED').length;
+            const totalSpent = orders
+                .filter(o => o.paymentStatus === 'PAID')
+                .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0);
+
+            $('#totalOrders').text(totalOrders);
+            $('#activeOrders').text(activeOrders);
+            $('#deliveredOrders').text(deliveredOrders);
+            $('#totalSpent').text('₹' + totalSpent.toFixed(2));
+        }
+
+        function displayOrders(orders) {
+            const filteredOrders = filterOrders(orders);
+            const container = $('#ordersContainer');
+            container.empty();
+
+            if (filteredOrders.length === 0) {
+                $('#emptyState').show();
+                container.hide();
+                return;
+            }
+
+            container.show();
+            $('#emptyState').hide();
+
+            filteredOrders.forEach(order => {
+                const orderCard = createOrderCard(order);
+                container.append(orderCard);
+            });
+        }
+
+        function createOrderCard(order) {
+            const statusColor = getStatusColor(order.status);
+            const paymentColor = getPaymentStatusColor(order.paymentStatus);
+            const statusIcon = getStatusIcon(order.status);
+
+            return `
+                <div class="card mb-3 order-card" data-order-id="${order.id}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                Order #${order.id}
+                            </h6>
+                            <small class="text-muted">Placed on ${formatDate(order.orderDate)}</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <span class="badge bg-${statusColor}">
+                                <i class="fas ${statusIcon} me-1"></i>${order.status}
+                            </span>
+                            <span class="badge bg-${paymentColor}">
+                                ${order.paymentStatus}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <strong>Items:</strong>
+                                    <div class="mt-2">
+                                        ${order.items.map(item => `
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span>${item.productName} x ${item.quantity}</span>
+                                                <span>₹${item.totalPrice}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                ${order.deliveryAddress ? `
+                                    <div class="mb-2">
+                                        <strong>Delivery Address:</strong><br>
+                                        <small class="text-muted">${order.deliveryAddress}</small>
+                                    </div>
+                                ` : ''}
+                                ${order.trackingNumber ? `
+                                    <div class="mb-2">
+                                        <strong>Tracking Number:</strong><br>
+                                        <small class="text-muted">${order.trackingNumber}</small>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="mb-3">
+                                    <h5 class="text-primary">₹${order.totalAmount}</h5>
+                                    <small class="text-muted">Total Amount</small>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="viewOrderDetails(${order.id})">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </button>
+                                    ${order.status === 'SHIPPED' ? `
+                                        <button class="btn btn-success btn-sm" onclick="markAsDelivered(${order.id})">
+                                            <i class="fas fa-check me-1"></i>Mark Delivered
+                                        </button>
+                                    ` : ''}
+                                    ${order.status === 'PENDING' ? `
+                                        <button class="btn btn-danger btn-sm" onclick="cancelOrder(${order.id})">
+                                            <i class="fas fa-times me-1"></i>Cancel Order
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterOrders() {
+            const statusFilter = $('#statusFilter').val();
+            const dateFilter = $('#dateFilter').val();
+            const searchFilter = $('#searchFilter').val().toLowerCase();
+
+            let filtered = currentOrders.filter(order => {
+                const statusMatch = !statusFilter || order.status === statusFilter;
+                const searchMatch = !searchFilter || 
+                    order.id.toString().includes(searchFilter) ||
+                    order.items.some(item => item.productName.toLowerCase().includes(searchFilter));
+                
+                let dateMatch = true;
+                if (dateFilter) {
+                    const orderDate = new Date(order.orderDate);
+                    const now = new Date();
+                    
+                    switch(dateFilter) {
+                        case 'month':
+                            dateMatch = orderDate.getMonth() === now.getMonth() && 
+                                      orderDate.getFullYear() === now.getFullYear();
+                            break;
+                        case 'quarter':
+                            const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+                            dateMatch = orderDate >= threeMonthsAgo;
+                            break;
+                        case 'year':
+                            dateMatch = orderDate.getFullYear() === now.getFullYear();
+                            break;
+                    }
+                }
+                
+                return statusMatch && searchMatch && dateMatch;
+            });
+
+            displayOrders(filtered);
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'PENDING': return 'warning';
+                case 'CONFIRMED': return 'info';
+                case 'SHIPPED': return 'primary';
+                case 'DELIVERED': return 'success';
+                case 'CANCELLED': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function getPaymentStatusColor(status) {
+            switch(status) {
+                case 'PENDING': return 'warning';
+                case 'PAID': return 'success';
+                case 'FAILED': return 'danger';
+                case 'REFUNDED': return 'info';
+                default: return 'secondary';
+            }
+        }
+
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'PENDING': return 'fa-clock';
+                case 'CONFIRMED': return 'fa-check';
+                case 'SHIPPED': return 'fa-shipping-fast';
+                case 'DELIVERED': return 'fa-check-circle';
+                case 'CANCELLED': return 'fa-times';
+                default: return 'fa-shopping-cart';
+            }
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function viewOrderDetails(orderId) {
+            $.ajax({
+                url: `/api/orders/${orderId}`,
+                method: 'GET',
+                success: function(order) {
+                    const content = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Order Information</h6>
+                                <p><strong>Order ID:</strong> #${order.id}</p>
+                                <p><strong>Order Date:</strong> ${formatDate(order.orderDate)}</p>
+                                <p><strong>Status:</strong> <span class="badge bg-${getStatusColor(order.status)}">${order.status}</span></p>
+                                <p><strong>Payment Status:</strong> <span class="badge bg-${getPaymentStatusColor(order.paymentStatus)}">${order.paymentStatus}</span></p>
+                                <p><strong>Payment Method:</strong> ${order.paymentMethod || 'Not specified'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Delivery Information</h6>
+                                <p><strong>Address:</strong> ${order.deliveryAddress || 'Not specified'}</p>
+                                <p><strong>Tracking Number:</strong> ${order.trackingNumber || 'Not available'}</p>
+                                ${order.deliveryDate ? `<p><strong>Delivery Date:</strong> ${formatDate(order.deliveryDate)}</p>` : ''}
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>Order Items</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${order.items.map(item => `
+                                        <tr>
+                                            <td>${item.productName}</td>
+                                            <td>${item.quantity}</td>
+                                            <td>₹${item.unitPrice}</td>
+                                            <td>₹${item.totalPrice}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-end">
+                            <h5>Total: ₹${order.totalAmount}</h5>
+                        </div>
+                    `;
+                    $('#orderDetailsContent').html(content);
+                    $('#orderDetailsModal').modal('show');
+                },
+                error: function(xhr) {
+                    showAlert('Error loading order details: ' + xhr.responseText, 'error');
+                }
+            });
+        }
+
+        function markAsDelivered(orderId) {
+            if (confirm('Mark this order as delivered?')) {
+                $.ajax({
+                    url: `/api/orders/${orderId}/status`,
+                    method: 'PUT',
+                    data: { status: 'DELIVERED' },
+                    success: function(response) {
+                        showAlert('Order marked as delivered!', 'success');
+                        loadOrders();
+                    },
+                    error: function(xhr) {
+                        showAlert('Error updating order status: ' + xhr.responseText, 'error');
+                    }
+                });
+            }
+        }
+
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order?')) {
+                $.ajax({
+                    url: `/api/orders/${orderId}/status`,
+                    method: 'PUT',
+                    data: { status: 'CANCELLED' },
+                    success: function(response) {
+                        showAlert('Order cancelled successfully!', 'success');
+                        loadOrders();
+                    },
+                    error: function(xhr) {
+                        showAlert('Error cancelling order: ' + xhr.responseText, 'error');
+                    }
+                });
+            }
+        }
+
+        function refreshOrders() {
+            loadOrders();
+            showAlert('Orders refreshed!', 'info');
+        }
+
+        function printOrder() {
+            window.print();
+        }
+
+        function showAlert(message, type) {
+            const alertClass = type === 'error' ? 'danger' : type;
+            const alertHtml = `
+                <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Remove existing alerts
+            $('.alert').remove();
+            
+            // Add new alert at the top
+            $('.container').prepend(alertHtml);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 

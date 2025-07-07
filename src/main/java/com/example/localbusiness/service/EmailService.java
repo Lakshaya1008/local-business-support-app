@@ -12,6 +12,19 @@ import org.springframework.stereotype.Service;
 public class EmailService {
     private final JavaMailSender mailSender;
 
+    public void sendEmail(String to, String subject, String content) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(content);
+            mailSender.send(message);
+            log.info("Email sent to: {} with subject: {}", to, subject);
+        } catch (Exception e) {
+            log.warn("Failed to send email to: {}. Error: {}", to, e.getMessage());
+        }
+    }
+
     public void sendVerificationEmail(String email, String token) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();

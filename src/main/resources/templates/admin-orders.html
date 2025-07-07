@@ -2,33 +2,595 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Manage Orders</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Orders - VyapariVerse</title>
     <link rel="stylesheet" th:href="@{/style.css}">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-<div class="container">
-    <h2>Manage Orders</h2>
-    <table>
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Total</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="order : ${orders}">
-            <td th:text="${order.id}"></td>
-            <td th:text="${order.user != null ? order.user.name : 'N/A'}"></td>
-            <td th:text="${order.orderDate}"></td>
-            <td th:text="${order.status}"></td>
-            <td th:text="${order.total}"></td>
-        </tr>
-        </tbody>
-    </table>
-    <a th:href="@{/admin/dashboard}">Back to Admin Dashboard</a>
-</div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/images/VyapariVerse.png" alt="VyapariVerse Logo" style="max-height: 40px; margin-right: 10px;" class="d-none d-md-inline">
+                <span class="d-md-none"><i class="fas fa-store me-2"></i></span>
+                VyapariVerse
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                <a th:href="@{/admin/products}" class="nav-link"><i class="fas fa-shopping-bag me-1"></i>Products</a>
+                <a th:href="@{/admin/orders}" class="nav-link active"><i class="fas fa-shopping-cart me-1"></i>Orders</a>
+                <a th:href="@{/admin/users}" class="nav-link"><i class="fas fa-users me-1"></i>Users</a>
+                <a th:href="@{/logout}" class="nav-link"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-shopping-cart me-2"></i>Order Management</h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary" onclick="refreshOrders()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                        </button>
+                        <button class="btn btn-primary" onclick="exportOrders()">
+                            <i class="fas fa-download me-2"></i>Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="statusFilter" class="form-label">Status</label>
+                                <select class="form-select" id="statusFilter" onchange="filterOrders()">
+                                    <option value="">All Statuses</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="CONFIRMED">Confirmed</option>
+                                    <option value="SHIPPED">Shipped</option>
+                                    <option value="DELIVERED">Delivered</option>
+                                    <option value="CANCELLED">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="paymentFilter" class="form-label">Payment Status</label>
+                                <select class="form-select" id="paymentFilter" onchange="filterOrders()">
+                                    <option value="">All Payment Statuses</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="PAID">Paid</option>
+                                    <option value="FAILED">Failed</option>
+                                    <option value="REFUNDED">Refunded</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="dateFilter" class="form-label">Date Range</label>
+                                <select class="form-select" id="dateFilter" onchange="filterOrders()">
+                                    <option value="">All Dates</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="quarter">This Quarter</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="searchFilter" class="form-label">Search</label>
+                                <input type="text" class="form-control" id="searchFilter" placeholder="Order ID, Customer, Product..." onkeyup="filterOrders()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Total Orders</h6>
+                                        <h3 id="totalOrders">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-shopping-cart fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Pending Orders</h6>
+                                        <h3 id="pendingOrders">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-clock fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Revenue</h6>
+                                        <h3 id="totalRevenue">₹0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-rupee-sign fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Avg Order Value</h6>
+                                        <h3 id="avgOrderValue">₹0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-chart-line fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders Table -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="ordersTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Payment</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ordersTableBody">
+                                    <!-- Orders will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Orders pagination">
+                            <ul class="pagination justify-content-center" id="pagination">
+                                <!-- Pagination will be generated here -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Order Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="orderDetailsContent">
+                    <!-- Order details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="printOrder()">
+                        <i class="fas fa-print me-2"></i>Print
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div class="modal fade" id="statusUpdateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Order Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="statusUpdateForm">
+                        <div class="mb-3">
+                            <label for="newStatus" class="form-label">New Status</label>
+                            <select class="form-select" id="newStatus" required>
+                                <option value="PENDING">Pending</option>
+                                <option value="CONFIRMED">Confirmed</option>
+                                <option value="SHIPPED">Shipped</option>
+                                <option value="DELIVERED">Delivered</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="statusNotes" class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" id="statusNotes" rows="3" placeholder="Add any notes about this status update..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateOrderStatus()">
+                        <i class="fas fa-save me-2"></i>Update Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-store me-2"></i>VyapariVerse</h5>
+                    <p class="mb-0">Empowering Local Businesses</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">&copy; 2024 VyapariVerse. All rights reserved.</p>
+                    <small>Built with Spring Boot, Thymeleaf, and Bootstrap</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <script>
+        let currentOrders = [];
+        let currentOrderId = null;
+        let currentPage = 1;
+        const ordersPerPage = 10;
+
+        // Load orders on page load
+        $(document).ready(function() {
+            loadOrders();
+        });
+
+        function loadOrders() {
+            $.ajax({
+                url: '/api/orders/seller',
+                method: 'GET',
+                success: function(orders) {
+                    currentOrders = orders;
+                    updateStatistics(orders);
+                    displayOrders(orders);
+                },
+                error: function(xhr) {
+                    showAlert('Error loading orders: ' + xhr.responseText, 'error');
+                }
+            });
+        }
+
+        function updateStatistics(orders) {
+            const totalOrders = orders.length;
+            const pendingOrders = orders.filter(o => o.status === 'PENDING').length;
+            const totalRevenue = orders
+                .filter(o => o.paymentStatus === 'PAID')
+                .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0);
+            const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+            $('#totalOrders').text(totalOrders);
+            $('#pendingOrders').text(pendingOrders);
+            $('#totalRevenue').text('₹' + totalRevenue.toFixed(2));
+            $('#avgOrderValue').text('₹' + avgOrderValue.toFixed(2));
+        }
+
+        function displayOrders(orders) {
+            const filteredOrders = filterOrders(orders);
+            const startIndex = (currentPage - 1) * ordersPerPage;
+            const endIndex = startIndex + ordersPerPage;
+            const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+            const tbody = $('#ordersTableBody');
+            tbody.empty();
+
+            paginatedOrders.forEach(order => {
+                const row = `
+                    <tr>
+                        <td><strong>#${order.id}</strong></td>
+                        <td>${order.customerName}</td>
+                        <td>${order.items.length} items</td>
+                        <td><strong>₹${order.totalAmount}</strong></td>
+                        <td>
+                            <span class="badge bg-${getStatusColor(order.status)}">
+                                ${order.status}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-${getPaymentStatusColor(order.paymentStatus)}">
+                                ${order.paymentStatus}
+                            </span>
+                        </td>
+                        <td>${formatDate(order.orderDate)}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewOrderDetails(${order.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="updateStatus(${order.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="markAsShipped(${order.id})">
+                                    <i class="fas fa-shipping-fast"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+
+            updatePagination(filteredOrders.length);
+        }
+
+        function filterOrders() {
+            const statusFilter = $('#statusFilter').val();
+            const paymentFilter = $('#paymentFilter').val();
+            const searchFilter = $('#searchFilter').val().toLowerCase();
+
+            let filtered = currentOrders.filter(order => {
+                const statusMatch = !statusFilter || order.status === statusFilter;
+                const paymentMatch = !paymentFilter || order.paymentStatus === paymentFilter;
+                const searchMatch = !searchFilter || 
+                    order.id.toString().includes(searchFilter) ||
+                    order.customerName.toLowerCase().includes(searchFilter) ||
+                    order.items.some(item => item.productName.toLowerCase().includes(searchFilter));
+                
+                return statusMatch && paymentMatch && searchMatch;
+            });
+
+            currentPage = 1;
+            displayOrders(filtered);
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'PENDING': return 'warning';
+                case 'CONFIRMED': return 'info';
+                case 'SHIPPED': return 'primary';
+                case 'DELIVERED': return 'success';
+                case 'CANCELLED': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function getPaymentStatusColor(status) {
+            switch(status) {
+                case 'PENDING': return 'warning';
+                case 'PAID': return 'success';
+                case 'FAILED': return 'danger';
+                case 'REFUNDED': return 'info';
+                default: return 'secondary';
+            }
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-IN');
+        }
+
+        function updatePagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / ordersPerPage);
+            const pagination = $('#pagination');
+            pagination.empty();
+
+            if (totalPages <= 1) return;
+
+            // Previous button
+            pagination.append(`
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
+                </li>
+            `);
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                pagination.append(`
+                    <li class="page-item ${currentPage === i ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                    </li>
+                `);
+            }
+
+            // Next button
+            pagination.append(`
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
+                </li>
+            `);
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            displayOrders(currentOrders);
+        }
+
+        function viewOrderDetails(orderId) {
+            $.ajax({
+                url: `/api/orders/${orderId}`,
+                method: 'GET',
+                success: function(order) {
+                    const content = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Order Information</h6>
+                                <p><strong>Order ID:</strong> #${order.id}</p>
+                                <p><strong>Customer:</strong> ${order.customerName}</p>
+                                <p><strong>Date:</strong> ${formatDate(order.orderDate)}</p>
+                                <p><strong>Status:</strong> <span class="badge bg-${getStatusColor(order.status)}">${order.status}</span></p>
+                                <p><strong>Payment:</strong> <span class="badge bg-${getPaymentStatusColor(order.paymentStatus)}">${order.paymentStatus}</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Delivery Information</h6>
+                                <p><strong>Address:</strong> ${order.deliveryAddress || 'Not specified'}</p>
+                                <p><strong>Method:</strong> ${order.paymentMethod || 'Not specified'}</p>
+                                <p><strong>Tracking:</strong> ${order.trackingNumber || 'Not available'}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>Order Items</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${order.items.map(item => `
+                                        <tr>
+                                            <td>${item.productName}</td>
+                                            <td>${item.quantity}</td>
+                                            <td>₹${item.unitPrice}</td>
+                                            <td>₹${item.totalPrice}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-end">
+                            <h5>Total: ₹${order.totalAmount}</h5>
+                        </div>
+                    `;
+                    $('#orderDetailsContent').html(content);
+                    $('#orderDetailsModal').modal('show');
+                },
+                error: function(xhr) {
+                    showAlert('Error loading order details: ' + xhr.responseText, 'error');
+                }
+            });
+        }
+
+        function updateStatus(orderId) {
+            currentOrderId = orderId;
+            $('#statusUpdateModal').modal('show');
+        }
+
+        function updateOrderStatus() {
+            const newStatus = $('#newStatus').val();
+            const notes = $('#statusNotes').val();
+
+            $.ajax({
+                url: `/api/orders/${currentOrderId}/status`,
+                method: 'PUT',
+                data: { status: newStatus },
+                success: function(response) {
+                    showAlert('Order status updated successfully!', 'success');
+                    $('#statusUpdateModal').modal('hide');
+                    loadOrders();
+                },
+                error: function(xhr) {
+                    showAlert('Error updating order status: ' + xhr.responseText, 'error');
+                }
+            });
+        }
+
+        function markAsShipped(orderId) {
+            $.ajax({
+                url: `/api/orders/${orderId}/status`,
+                method: 'PUT',
+                data: { status: 'SHIPPED' },
+                success: function(response) {
+                    showAlert('Order marked as shipped!', 'success');
+                    loadOrders();
+                },
+                error: function(xhr) {
+                    showAlert('Error updating order status: ' + xhr.responseText, 'error');
+                }
+            });
+        }
+
+        function refreshOrders() {
+            loadOrders();
+            showAlert('Orders refreshed!', 'info');
+        }
+
+        function exportOrders() {
+            const filteredOrders = filterOrders(currentOrders);
+            const csvContent = generateCSV(filteredOrders);
+            downloadCSV(csvContent, 'orders_export.csv');
+        }
+
+        function generateCSV(orders) {
+            const headers = ['Order ID', 'Customer', 'Total Amount', 'Status', 'Payment Status', 'Date'];
+            const rows = orders.map(order => [
+                order.id,
+                order.customerName,
+                order.totalAmount,
+                order.status,
+                order.paymentStatus,
+                formatDate(order.orderDate)
+            ]);
+            
+            return [headers, ...rows].map(row => row.join(',')).join('\n');
+        }
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function printOrder() {
+            window.print();
+        }
+
+        function showAlert(message, type) {
+            const alertClass = type === 'error' ? 'danger' : type;
+            const alertHtml = `
+                <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Remove existing alerts
+            $('.alert').remove();
+            
+            // Add new alert at the top
+            $('.container').prepend(alertHtml);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+    </script>
 </body>
 </html> 

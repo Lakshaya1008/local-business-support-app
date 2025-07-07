@@ -22,8 +22,8 @@ INSERT INTO vendor_applications (id, user_id, business_name, business_descriptio
 
 -- Orders
 INSERT INTO orders (id, customer_id, seller_id, total_amount, status, order_date, delivery_address, payment_method, payment_status_enum) VALUES
-  (1, 3, 2, 448.00, 'PENDING', NOW(), '456 Customer Street, Delhi', 'RAZORPAY', 'PENDING'),
-  (2, 3, 2, 99.00, 'CONFIRMED', NOW(), '456 Customer Street, Delhi', 'RAZORPAY', 'PAID');
+  (1, 3, 2, 448.00, 'PENDING', NOW(), '456 Customer Street, Delhi', 'CASHFREE', 'PENDING'),
+(2, 3, 2, 99.00, 'CONFIRMED', NOW(), '456 Customer Street, Delhi', 'CASHFREE', 'PAID');
 
 -- Order Items
 INSERT INTO order_items (id, order_id, product_id, quantity, unit_price, total_price) VALUES

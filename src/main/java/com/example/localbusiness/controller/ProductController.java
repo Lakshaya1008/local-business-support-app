@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -80,8 +81,12 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ProductResponse>> searchProducts(@RequestParam(required = false) String name, @RequestParam(required = false) String category) {
-        return ResponseEntity.ok(productService.searchProducts(name, category));
+    public ResponseEntity<List<ProductResponse>> searchProducts(
+            @RequestParam(required = false) String name, 
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice) {
+        return ResponseEntity.ok(productService.searchProducts(name, category, minPrice, maxPrice));
     }
 
     @GetMapping("/{id}")
